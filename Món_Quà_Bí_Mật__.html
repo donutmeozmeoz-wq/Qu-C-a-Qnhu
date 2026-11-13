@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Một món quà bí mật dành cho cậu 🎁</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts hỗ trợ tiếng Việt mềm mại -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti cho hiệu ứng pháo hoa trái tim -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Tone.js cho hiệu ứng âm thanh nhẹ nhàng (không dùng link ngoài) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+
+    <style>
+        :root {
+            --pink-primary: #ff758f;
+            --pink-dark: #ff4d6d;
+            --pink-light: #fff0f3;
+            --cream-bg: #fff8f9;
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #ffe5ec 0%, #f3e8ff 50%, #ffccd5 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: #590d22;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .font-handwriting {
+            font-family: 'Dancing Script', cursive;
+        }
+
+        /* Hiệu ứng Glassmorphism */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1.5px solid rgba(255, 255, 255, 0.85);
+            box-shadow: 0 12px 35px rgba(255, 117, 143, 0.18);
+        }
+
+        /* Hiệu ứng rung khi nhập sai mật khẩu */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        /* Hiệu ứng nhịp đập trái tim */
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            25% { transform: scale(1.12); }
+            45% { transform: scale(0.98); }
+            65% { transform: scale(1.08); }
+        }
+        .animate-heartbeat {
+            animation: heartbeat 1.6s infinite ease-in-out;
+        }
+
+        /* Hiệu ứng lắc lư hộp quà bí mật */
+        @keyframes giftWobble {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            15% { transform: rotate(-6deg) scale(1.05); }
+            30% { transform: rotate(6deg) scale(1.05); }
+            45% { transform: rotate(-4deg) scale(1.03); }
+            60% { transform: rotate(4deg) scale(1.03); }
+            75% { transform: rotate(0deg) scale(1); }
+        }
+        .animate-gift-wobble {
+            animation: giftWobble 2.2s infinite ease-in-out;
+        }
+
+        /* Hiệu ứng bung mở hộp quà khi nhập đúng mật khẩu */
+        @keyframes giftOpenPop {
+            0% { transform: scale(1) rotate(0deg); }
+            40% { transform: scale(1.25) rotate(-8deg); }
+            70% { transform: scale(1.35) rotate(8deg); opacity: 1; }
+            100% { transform: scale(1.8) rotate(0deg); opacity: 0; }
+        }
+        .animate-gift-open {
+            animation: giftOpenPop 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        /* Hiệu ứng lấp lánh cho nút Đồng ý */
+        @keyframes shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+        .btn-yes-glow {
+            background: linear-gradient(90deg, #ff4d6d, #ff8fa3, #ff4d6d);
+            background-size: 200% auto;
+            animation: shimmer 2.5s linear infinite;
+            box-shadow: 0 6px 20px rgba(255, 77, 109, 0.45);
+        }
+
+        /* Hiệu ứng lật thẻ 3D */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.65s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1.25rem;
+        }
+        .flip-card-back {
+            transform: rotateY(180deg);
+        }
+
+        /* Canvas nền trái tim bay */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Chuyển cảnh mượt mà giữa các màn hình */
+        .screen-section {
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .screen-hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.95);
+            position: absolute;
+            inset: 0;
+        }
+        .screen-active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1);
+            position: relative;
+        }
+
+        /* Con trỏ nhấp nháy của hiệu ứng gõ chữ */
+        .typing-cursor::after {
+            content: '|';
+            animation: blink 0.8s infinite;
+            color: #ff4d6d;
+            font-weight: bold;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-3 sm:p-6 relative selection:bg-pink-200 selection:text-pink-900">
+
+    <!-- Canvas hiệu ứng trái tim & cánh hoa bay nền -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Nút bật/tắt âm thanh nhẹ nhàng góc trên bên phải -->
+    <button id="sound-toggle" onclick="toggleSound()" title="Bật/Tắt âm thanh dễ thương"
+        class="fixed top-4 right-4 z-50 glass-card w-11 h-11 rounded-full flex items-center justify-center text-pink-600 hover:scale-110 active:scale-95 transition shadow-md">
+        <span id="sound-icon" class="text-lg">🔇</span>
+    </button>
+
+    <!-- ========================================================= -->
+    <!-- MÀN HÌNH 1: HỘP QUÀ BÍ MẬT & MẬT KHẨU 8 CHỮ SỐ (07042012) -->
+    <!-- ========================================================= -->
+    <main id="lock-screen" class="screen-section screen-active z-10 w-full max-w-md mx-auto">
+        <div id="lock-card" class="glass-card rounded-3xl p-6 sm:p-8 text-center">
+            <!-- Biểu tượng hộp quà bí mật có hiệu ứng lắc lư & bung nắp -->
+            <div id="gift-box-wrapper" class="relative w-20 h-20 mx-auto mb-3 rounded-2xl bg-gradient-to-tr from-pink-400 via-rose-400 to-purple-400 flex items-center justify-center shadow-lg animate-gift-wobble">
+                <span id="gift-emoji" class="text-4xl select-none">🎁</span>
+                <span class="absolute -top-1.5 -right-1.5 text-sm animate-ping">✨</span>
+            </div>
+
+            <h1 class="font-handwriting text-3xl sm:text-4xl font-bold text-rose-600 mb-1">
+                Một món quà bí mật dành cho cậu 🎁
+            </h1>
+            <p class="text-sm sm:text-base text-rose-800/80 mb-5">
+                Nhập mật khẩu 8 chữ số để mở hộp quà nhé ✨
+            </p>
+
+            <!-- 8 ô hiển thị mã PIN -->
+            <div id="pin-dots" class="flex justify-center gap-2 sm:gap-2.5 mb-3">
+                <!-- Sẽ được render tự động bằng JS -->
+            </div>
+
+            <!-- Khu vực thông báo lỗi / gợi ý (giữ bí mật, không lộ tên) -->
+            <div class="min-h-[28px] mb-4 flex items-center justify-center">
+                <p id="lock-message" class="text-xs sm:text-sm font-semibold text-rose-600 transition-all duration-300">
+                    Gợi ý: Một ngày đặc biệt của chủ nhân hộp quà 🎂
+                </p>
+            </div>
+
+            <!-- Bàn phím số ảo dễ thương -->
+            <div class="grid grid-cols-3 gap-2.5 sm:gap-3 max-w-[280px] mx-auto">
+                <button onclick="pressKey('1')" class="keypad-btn h-14 rounded-2xl bg-white/80 hover:bg-pink-100 active:bg-pink-200 text-xl font-bold text-rose-700 shadow-sm border border-pink-100 transition transform active:scale-90">1</button>
+                <button onclick="pressKey('2')" class="keypad-btn h-14 rounded-2xl bg-white/80 hover:bg-pink-100 active:bg-pink-200 text-xl font-bold text-rose-700 shadow-sm border border-pink-100 transition transform active:scale-90">2</button>
+                <button onclick="pressKey('3')" class="keypad-btn h-14 rounded-2xl bg-white/80 hover:bg-pink-100 active:bg-pink-200 text-xl font-bold text-rose-700 shadow-sm border border-pink-100 transition transform active:scale-90">3</button>
+                <button onclick="pressKey('4')" class="keypad-btn h-14 rounded-2xl bg-white/80 hover:bg-pink-100 active:bg-pink-200 text-xl font-bold text-rose-700 shadow-sm border border-pink-100 transition transform active:scale-90">4</button>
+                <button onclick="pressKey('5')" class="keypad-btn h-14 rounded-2xl bg-white/80 hover:bg-pink-100 active:bg-pink-200 text-xl font-bold text-rose-700 shadow-sm border border-pink-100 transition transform active:scale-90">5</button>
+                <button onclick="pressKey('6')" class="keypad-btn h-14 rounded-2xl bg-white/80 hover:bg-pink-100 active:bg-pink-200 text-xl font-bold text-rose-700 shadow-sm border border-pink-100 transition transform active:scale-90">6</button>
+                <button onclick="pressKey('7')" class="keypad-btn h-14 rounded-2xl bg-white/80 hover:bg-pink-100 active:bg-pink-200 text-xl font-bold text-rose-700 shadow-sm border border-pink-100 transition transform active:scale-90">7</button>
+                <button onclick="pressKey('8')" class="keypad-btn h-14 rounded-2xl bg-white/80 hover:bg-pink-100 active:bg-pink-200 text-xl font-bold text-rose-700 shadow-sm border border-pink-100 transition transform active:scale-90">8</button>
+                <button onclick="pressKey('9')" class="keypad-btn h-14 rounded-2xl bg-white/80 hover:bg-pink-100 active:bg-pink-200 text-xl font-bold text-rose-700 shadow-sm border border-pink-100 transition transform active:scale-90">9</button>
+                <button onclick="clearPin()" class="h-14 rounded-2xl bg-rose-100/80 hover:bg-rose-200 active:bg-rose-300 text-xs font-bold text-rose-600 shadow-sm transition transform active:scale-90">Xóa hết</button>
+                <button onclick="pressKey('0')" class="keypad-btn h-14 rounded-2xl bg-white/80 hover:bg-pink-100 active:bg-pink-200 text-xl font-bold text-rose-700 shadow-sm border border-pink-100 transition transform active:scale-90">0</button>
+                <button onclick="deleteLast()" class="h-14 rounded-2xl bg-rose-100/80 hover:bg-rose-200 active:bg-rose-300 text-lg font-bold text-rose-600 shadow-sm transition transform active:scale-90 flex items-center justify-center" aria-label="Xóa một số">⌫</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- ========================================================= -->
+    <!-- MÀN HÌNH 2: TỎ TÌNH CHÍNH & THẺ KỶ NIỆM                   -->
+    <!-- ========================================================= -->
+    <section id="main-screen" class="screen-section screen-hidden z-10 w-full max-w-2xl mx-auto py-4">
+        <div class="glass-card rounded-3xl p-6 sm:p-9 text-center relative overflow-hidden">
+            <!-- Tiêu đề lãng mạn -->
+            <div class="inline-block px-4 py-1 rounded-full bg-pink-100 text-rose-600 text-xs sm:text-sm font-bold mb-3 shadow-sm">
+                ✨ 07 • 04 • 2012 ✨
+            </div>
+            <h1 class="font-handwriting text-4xl sm:text-5xl font-bold text-rose-600 mb-4">
+                Gửi Quỳnh Như đáng yêu!
+            </h1>
+
+            <!-- Hộp thư gõ chữ tự động (Typewriter) -->
+            <div class="bg-white/75 rounded-2xl p-5 sm:p-6 mb-6 text-left shadow-inner border border-pink-100 min-h-[155px] flex items-center">
+                <p id="typewriter-text" class="text-sm sm:text-base leading-relaxed text-rose-900 font-medium typing-cursor"></p>
+            </div>
+
+            <!-- 3 Thẻ lật lý do thích Quỳnh Như -->
+            <div class="mb-7">
+                <p class="text-xs sm:text-sm font-bold text-rose-500 uppercase tracking-wider mb-3">
+                    Chạm vào từng thẻ để mở bí mật nhỏ nhé 💌
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                    <!-- Thẻ 1 -->
+                    <div class="flip-card h-36 cursor-pointer perspective-1000" onclick="flipCard(this)">
+                        <div class="flip-card-inner">
+                            <div class="flip-card-front bg-gradient-to-br from-pink-200 to-rose-100 border border-white flex flex-col items-center justify-center p-3 shadow-sm">
+                                <span class="text-3xl mb-1">🌸</span>
+                                <span class="font-bold text-rose-700 text-sm">Điều số 1</span>
+                                <span class="text-[11px] text-rose-500 mt-1">(Bấm để xem)</span>
+                            </div>
+                            <div class="flip-card-back bg-white border border-pink-200 flex flex-col items-center justify-center p-3 shadow-md">
+                                <p class="text-xs sm:text-sm font-semibold text-rose-800 leading-snug">
+                                    Nụ cười của Quỳnh Như tỏa nắng hơn cả bầu trời mùa hạ ☀️
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thẻ 2 -->
+                    <div class="flip-card h-36 cursor-pointer perspective-1000" onclick="flipCard(this)">
+                        <div class="flip-card-inner">
+                            <div class="flip-card-front bg-gradient-to-br from-rose-200 to-pink-100 border border-white flex flex-col items-center justify-center p-3 shadow-sm">
+                                <span class="text-3xl mb-1">🧸</span>
+                                <span class="font-bold text-rose-700 text-sm">Điều số 2</span>
+                                <span class="text-[11px] text-rose-500 mt-1">(Bấm để xem)</span>
+                            </div>
+                            <div class="flip-card-back bg-white border border-pink-200 flex flex-col items-center justify-center p-3 shadow-md">
+                                <p class="text-xs sm:text-sm font-semibold text-rose-800 leading-snug">
+                                    Mỗi lần trò chuyện cùng cậu, mọi mệt mỏi của tớ đều tan biến hết 💫
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thẻ 3 -->
+                    <div class="flip-card h-36 cursor-pointer perspective-1000" onclick="flipCard(this)">
+                        <div class="flip-card-inner">
+                            <div class="flip-card-front bg-gradient-to-br from-pink-200 to-rose-200 border border-white flex flex-col items-center justify-center p-3 shadow-sm">
+                                <span class="text-3xl mb-1">🍓</span>
+                                <span class="font-bold text-rose-700 text-sm">Điều số 3</span>
+                                <span class="text-[11px] text-rose-500 mt-1">(Bấm để xem)</span>
+                            </div>
+                            <div class="flip-card-back bg-white border border-pink-200 flex flex-col items-center justify-center p-3 shadow-md">
+                                <p class="text-xs sm:text-sm font-semibold text-rose-800 leading-snug">
+                                    Vì cậu là Quỳnh Như — phiên bản duy nhất và đặc biệt nhất trên đời 💖
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Câu hỏi tỏ tình chính -->
+            <div class="pt-4 border-t border-pink-200/70">
+                <h2 class="font-handwriting text-3xl sm:text-4xl font-bold text-rose-600 mb-2">
+                    Quỳnh Như làm người yêu tớ nhé?
+                </h2>
+                <p id="tease-caption" class="text-xs sm:text-sm text-rose-500 font-medium min-h-[22px] mb-5">
+                    Chọn một câu trả lời thật lòng nha 💕
+                </p>
+
+                <!-- Khu vực tương tác 2 nút -->
+                <div id="buttons-arena" class="relative min-h-[120px] flex flex-wrap items-center justify-center gap-4">
+                    <button id="yes-btn" onclick="acceptLove()"
+                        class="btn-yes-glow text-white font-bold py-3.5 px-8 rounded-full text-base sm:text-lg transition-all duration-300 transform hover:scale-105 active:scale-95 z-20 cursor-pointer">
+                        Đồng ý ❤️
+                    </button>
+
+                    <button id="no-btn"
+                        onmouseover="dodgeNoButton()"
+                        ontouchstart="dodgeNoButton(event)"
+                        onclick="dodgeNoButton(event)"
+                        class="bg-white/90 hover:bg-rose-50 text-rose-600 border border-rose-200 font-semibold py-3 px-6 rounded-full text-sm sm:text-base shadow-sm transition-all duration-200 z-10 cursor-pointer">
+                        Không chịu đâu 🙈
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- MÀN HÌNH 3: ĂN MỪNG KHI ĐỒNG Ý                            -->
+    <!-- ========================================================= -->
+    <section id="celebration-screen" class="screen-section screen-hidden z-10 w-full max-w-lg mx-auto py-4">
+        <div class="glass-card rounded-3xl p-6 sm:p-9 text-center relative overflow-hidden">
+            <div class="text-5xl sm:text-6xl mb-3 animate-heartbeat">💖🎉💖</div>
+            <h1 class="font-handwriting text-4xl sm:text-5xl font-bold text-rose-600 mb-3">
+                Yayyy! Cậu đồng ý rồi!
+            </h1>
+            <p class="text-sm sm:text-base text-rose-800 font-medium leading-relaxed mb-5">
+                Cảm ơn <span class="font-bold text-rose-600">Quỳnh Như</span> đã cho tớ cơ hội được đồng hành, quan tâm và che chở cho cậu mỗi ngày!
+            </p>
+
+            <!-- Phiếu chứng nhận / Lời hứa ngọt ngào -->
+            <div class="bg-white/85 rounded-2xl p-5 mb-6 border-2 border-dashed border-pink-300 text-left shadow-sm">
+                <h3 class="text-center font-bold text-rose-600 text-sm sm:text-base mb-3 uppercase tracking-wide">
+                    🌸 Lời hứa dành cho Quỳnh Như 🌸
+                </h3>
+                <ul class="space-y-2 text-xs sm:text-sm text-rose-900 font-medium">
+                    <li class="flex items-start gap-2">
+                        <span>🍓</span>
+                        <span>Luôn lắng nghe, kiên nhẫn và bên cạnh mỗi khi cậu cần.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span>🧸</span>
+                        <span>Cùng cậu đi ăn thật nhiều món ngon và đi khắp nơi cậu thích.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span>✨</span>
+                        <span>Nhường phần thắng cho Quỳnh Như trong mọi cuộc tranh luận (trừ lúc tranh giành yêu cậu nhiều hơn).</span>
+                    </li>
+                </ul>
+                <div class="mt-4 pt-3 border-t border-pink-100 flex justify-between items-center text-[11px] text-rose-500 font-semibold">
+                    <span>Ngày đặc biệt: <span id="today-date"></span></span>
+                    <span>Chính thức thuộc về nhau ❤️</span>
+                </div>
+            </div>
+
+            <!-- Gửi lời nhắn lại cho đối phương -->
+            <div class="mb-5 text-left">
+                <label for="reply-note" class="block text-xs font-bold text-rose-600 mb-1.5">
+                    💌 Nhắn lại điều gì đó cho tớ nhé:
+                </label>
+                <div class="flex gap-2">
+                    <input id="reply-note" type="text" placeholder="Ví dụ: Tớ cũng thích cậu nhiều lắm..."
+                        class="flex-1 px-4 py-2.5 rounded-xl bg-white/90 border border-pink-200 text-sm text-rose-900 focus:outline-none focus:ring-2 focus:ring-pink-400">
+                    <button onclick="copyLoveMessage()"
+                        class="px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 active:scale-95 text-white text-xs sm:text-sm font-bold shadow transition whitespace-nowrap">
+                        Sao chép gửi tớ
+                    </button>
+                </div>
+                <p id="copy-feedback" class="text-xs text-emerald-600 font-semibold mt-1.5 hidden">
+                    ✅ Đã sao chép lời nhắn! Giờ cậu chỉ cần dán (Paste) và gửi cho tớ thôi nha ❤️
+                </p>
+            </div>
+
+            <!-- Nút bắn thêm pháo hoa -->
+            <button onclick="triggerFireworks()"
+                class="w-full py-3 rounded-2xl bg-gradient-to-r from-pink-400 to-rose-500 text-white font-bold text-sm sm:text-base shadow-md hover:opacity-95 active:scale-98 transition">
+                Bắn thêm pháo hoa trái tim 🎆
+            </button>
+        </div>
+    </section>
+
+    <script>
+        /* =========================================================
+           1. ÂM THANH NHẸ NHÀNG BẰNG TONE.JS (KHÔNG DÙNG URL NGOÀI)
+           ========================================================= */
+        let soundEnabled = false;
+        let synth = null;
+
+        function initSound() {
+            if (!synth && typeof Tone !== 'undefined') {
+                synth = new Tone.PolySynth(Tone.Synth, {
+                    oscillator: { type: "sine" },
+                    envelope: { attack: 0.02, decay: 0.2, sustain: 0.1, release: 0.8 }
+                }).toDestination();
+                synth.volume.value = -10;
+            }
+        }
+
+        async function toggleSound() {
+            initSound();
+            if (typeof Tone !== 'undefined' && Tone.context.state !== 'running') {
+                await Tone.start();
+            }
+            soundEnabled = !soundEnabled;
+            document.getElementById('sound-icon').textContent = soundEnabled ? '🔊' : '🔇';
+            if (soundEnabled) playNote('C5', '16n');
+        }
+
+        function playNote(note, duration = '16n') {
+            if (!soundEnabled || !synth) return;
+            try {
+                synth.triggerAttackRelease(note, duration);
+            } catch (e) {}
+        }
+
+        function playSuccessMelody() {
+            if (!soundEnabled || !synth) return;
+            const notes = ['C5', 'E5', 'G5', 'B5', 'C6'];
+            notes.forEach((n, idx) => {
+                setTimeout(() => playNote(n, '8n'), idx * 110);
+            });
+        }
+
+        /* =========================================================
+           2. LOGIC MÀN HÌNH KHÓA HỘP QUÀ BÍ MẬT (PASSCODE: 07042012)
+           ========================================================= */
+        const CORRECT_PIN = "07042012";
+        let currentPin = "";
+        let wrongAttempts = 0;
+
+        const hints = [
+            "Ngày đặc biệt của cậu đó nha 🎀",
+            "Thử nhớ lại ngày sinh nhật của cậu xem nào 🎂",
+            "Gồm 8 chữ số theo định dạng DDMMYYYY nha ✨",
+            "Gợi ý siêu to: 07/04/2012 đó 🎁"
+        ];
+
+        function renderPinDots() {
+            const container = document.getElementById('pin-dots');
+            container.innerHTML = '';
+            for (let i = 0; i < 8; i++) {
+                const filled = i < currentPin.length;
+                const dot = document.createElement('div');
+                dot.className = `w-7 h-9 sm:w-8 sm:h-10 rounded-xl flex items-center justify-center font-bold text-base sm:text-lg transition-all duration-200 border-2 ${
+                    filled
+                        ? 'bg-rose-500 border-rose-500 text-white scale-105 shadow-sm'
+                        : 'bg-white/70 border-pink-200 text-transparent'
+                }`;
+                dot.textContent = filled ? currentPin[i] : '•';
+                container.appendChild(dot);
+            }
+        }
+
+        function pressKey(digit) {
+            if (currentPin.length >= 8) return;
+            playNote('E5', '32n');
+            currentPin += digit;
+            renderPinDots();
+
+            if (currentPin.length === 8) {
+                setTimeout(verifyPin, 220);
+            }
+        }
+
+        function deleteLast() {
+            if (currentPin.length === 0) return;
+            playNote('C5', '32n');
+            currentPin = currentPin.slice(0, -1);
+            renderPinDots();
+        }
+
+        function clearPin() {
+            playNote('A4', '32n');
+            currentPin = "";
+            renderPinDots();
+        }
+
+        // Hỗ trợ nhập từ bàn phím vật lý trên máy tính
+        document.addEventListener('keydown', (e) => {
+            const lockScreen = document.getElementById('lock-screen');
+            if (!lockScreen.classList.contains('screen-active')) return;
+
+            if (e.key >= '0' && e.key <= '9') {
+                pressKey(e.key);
+            } else if (e.key === 'Backspace') {
+                deleteLast();
+            } else if (e.key === 'Escape') {
+                clearPin();
+            }
+        });
+
+        function verifyPin() {
+            const lockCard = document.getElementById('lock-card');
+            const msgEl = document.getElementById('lock-message');
+            const giftBox = document.getElementById('gift-box-wrapper');
+            const giftEmoji = document.getElementById('gift-emoji');
+
+            if (currentPin === CORRECT_PIN) {
+                playSuccessMelody();
+                msgEl.textContent = "Mở hộp quà thành công! Bất ngờ chưa nè 🎉❤️";
+                msgEl.className = "text-xs sm:text-sm font-bold text-emerald-600";
+
+                // Hiệu ứng bung mở hộp quà
+                giftEmoji.textContent = "🎊";
+                giftBox.classList.remove('animate-gift-wobble');
+                giftBox.classList.add('animate-gift-open');
+
+                triggerFireworks();
+
+                setTimeout(() => {
+                    switchScreen('lock-screen', 'main-screen');
+                    startTypewriter();
+                }, 850);
+            } else {
+                playNote('G3', '8n');
+                lockCard.classList.remove('animate-shake');
+                void lockCard.offsetWidth; // Kích hoạt lại animation
+                lockCard.classList.add('animate-shake');
+
+                const hintText = hints[wrongAttempts % hints.length];
+                wrongAttempts++;
+                msgEl.textContent = `Chưa đúng rồi! ${hintText}`;
+                msgEl.className = "text-xs sm:text-sm font-bold text-rose-600";
+
+                setTimeout(() => {
+                    currentPin = "";
+                    renderPinDots();
+                }, 450);
+            }
+        }
+
+        function switchScreen(fromId, toId) {
+            const fromEl = document.getElementById(fromId);
+            const toEl = document.getElementById(toId);
+            fromEl.classList.remove('screen-active');
+            fromEl.classList.add('screen-hidden');
+            toEl.classList.remove('screen-hidden');
+            toEl.classList.add('screen-active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /* =========================================================
+           3. HIỆU ỨNG GÕ CHỮ (TYPEWRITER) & LẬT THẺ KỶ NIỆM
+           ========================================================= */
+        const loveLetter = "Chào Quỳnh Như, cô gái nhỏ sinh ngày 07/04/2012! Từ lúc quen cậu, thế giới của tớ bỗng nhiên trở nên ngọt ngào và rực rỡ hơn rất nhiều. Tớ không giỏi nói những lời hoa mỹ, nhưng tớ biết chắc một điều: mỗi ngày trôi qua, tớ đều thích cậu thêm một chút. Hôm nay tớ lấy hết can đảm làm trang web nhỏ này chỉ để hỏi cậu một điều thật lòng...";
+
+        function startTypewriter() {
+            const target = document.getElementById('typewriter-text');
+            target.textContent = '';
+            let i = 0;
+
+            function typeNext() {
+                if (i < loveLetter.length) {
+                    target.textContent += loveLetter.charAt(i);
+                    i++;
+                    setTimeout(typeNext, 34);
+                } else {
+                    target.classList.remove('typing-cursor');
+                }
+            }
+            typeNext();
+        }
+
+        function flipCard(cardEl) {
+            playNote('G5', '32n');
+            cardEl.classList.toggle('flipped');
+        }
+
+        /* =========================================================
+           4. NÚT "KHÔNG CHỊU ĐÂU" CHẠY TRỐN & NÚT "ĐỒNG Ý" LỚN DẦN
+           ========================================================= */
+        const funnyPhrases = [
+            "Đừng bấm nút này mà 🥺",
+            "Bấm nút kia kìa 👉❤️",
+            "Nút này hỏng rồi nha 😜",
+            "Ơ kìa, trượt tay rồi đúng không?",
+            "Suy nghĩ lại đi mà công chúa 🌸",
+            "Nút này không có tác dụng đâu 🙈",
+            "Đồng ý đi mà, tớ ngoan lắm!",
+            "Chạy đâu cho thoát khỏi tớ 💕"
+        ];
+
+        let dodgeCount = 0;
+        let yesScale = 1;
+
+        function dodgeNoButton(event) {
+            if (event) event.preventDefault();
+            playNote('D5', '32n');
+
+            const noBtn = document.getElementById('no-btn');
+            const yesBtn = document.getElementById('yes-btn');
+            const caption = document.getElementById('tease-caption');
+            const arena = document.getElementById('buttons-arena');
+
+            // Đổi câu thoại dễ thương
+            const phrase = funnyPhrases[dodgeCount % funnyPhrases.length];
+            noBtn.textContent = phrase;
+            caption.textContent = "Hehe, nút 'Không chịu đâu' đang trốn cậu đó! 😆";
+            dodgeCount++;
+
+            // Tăng kích thước nút Đồng ý
+            yesScale = Math.min(yesScale + 0.14, 1.85);
+            yesBtn.style.transform = `scale(${yesScale})`;
+
+            // Tính toán vị trí ngẫu nhiên an toàn trong khung arena
+            const arenaRect = arena.getBoundingClientRect();
+            const btnWidth = noBtn.offsetWidth;
+            const btnHeight = noBtn.offsetHeight;
+
+            const maxX = Math.max(arenaRect.width - btnWidth - 10, 20);
+            const maxY = Math.max(arenaRect.height - btnHeight - 10, 20);
+
+            const randomX = Math.floor(Math.random() * maxX) - maxX / 2;
+            const randomY = Math.floor(Math.random() * maxY) - maxY / 2;
+
+            noBtn.style.position = 'relative';
+            noBtn.style.transform = `translate(${randomX}px, ${randomY}px)`;
+        }
+
+        /* =========================================================
+           5. MÀN HÌNH ĂN MỪNG & PHÁO HOA TRÁI TIM
+           ========================================================= */
+        function acceptLove() {
+            playSuccessMelody();
+            triggerFireworks();
+
+            // Hiển thị ngày hiện tại trên phiếu chứng nhận
+            const now = new Date();
+            const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+            document.getElementById('today-date').textContent = dateStr;
+
+            switchScreen('main-screen', 'celebration-screen');
+
+            // Bắn pháo hoa liên tục trong 3 giây đầu
+            let bursts = 0;
+            const interval = setInterval(() => {
+                triggerFireworks();
+                bursts++;
+                if (bursts >= 4) clearInterval(interval);
+            }, 650);
+        }
+
+        function triggerFireworks() {
+            if (typeof confetti !== 'function') return;
+
+            const colors = ['#ff4d6d', '#ff758f', '#ffb3c1', '#ffd166', '#ffffff'];
+            confetti({
+                particleCount: 65,
+                spread: 75,
+                origin: { y: 0.65 },
+                colors: colors
+            });
+            confetti({
+                particleCount: 35,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 },
+                colors: colors
+            });
+            confetti({
+                particleCount: 35,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 },
+                colors: colors
+            });
+        }
+
+        function copyLoveMessage() {
+            const input = document.getElementById('reply-note');
+            const customText = input.value.trim();
+            const messageToSend = customText
+                ? `Quỳnh Như đồng ý làm người yêu cậu rồi nè ❤️ Lời nhắn: "${customText}"`
+                : `Quỳnh Như đồng ý làm người yêu cậu rồi nè ❤️✨`;
+
+            // Dùng textarea tạm và document.execCommand('copy') để tương thích tốt trong iframe
+            const tempInput = document.createElement('textarea');
+            tempInput.value = messageToSend;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            try {
+                document.execCommand('copy');
+                const feedback = document.getElementById('copy-feedback');
+                feedback.classList.remove('hidden');
+                playNote('C6', '16n');
+            } catch (err) {}
+            document.body.removeChild(tempInput);
+        }
+
+        /* =========================================================
+           6. HIỆU ỨNG TRÁI TIM & CÁNH HOA BAY NHẸ NHÀNG TRÊN CANVAS
+           ========================================================= */
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class FloatingHeart {
+            constructor() {
+                this.reset(true);
+            }
+
+            reset(initial = false) {
+                this.x = Math.random() * canvas.width;
+                this.y = initial ? Math.random() * canvas.height : canvas.height + 20;
+                this.size = Math.random() * 12 + 8;
+                this.speedY = Math.random() * 1.1 + 0.45;
+                this.speedX = (Math.random() - 0.5) * 0.6;
+                this.opacity = Math.random() * 0.45 + 0.2;
+                this.swing = Math.random() * Math.PI * 2;
+                const palette = ['#ff4d6d', '#ff758f', '#ff8fa3', '#ffb3c1'];
+                this.color = palette[Math.floor(Math.random() * palette.length)];
+            }
+
+            update() {
+                this.y -= this.speedY;
+                this.swing += 0.02;
+                this.x += Math.sin(this.swing) * 0.45 + this.speedX;
+                if (this.y < -30) {
+                    this.reset(false);
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.opacity;
+                ctx.fillStyle = this.color;
+                ctx.translate(this.x, this.y);
+
+                // Vẽ hình trái tim mềm mại
+                const s = this.size / 2;
+                ctx.beginPath();
+                ctx.moveTo(0, s * 0.4);
+                ctx.bezierCurveTo(-s, -s * 0.6, -s * 2, s * 0.4, 0, s * 1.8);
+                ctx.bezierCurveTo(s * 2, s * 0.4, s, -s * 0.6, 0, s * 0.4);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            const count = Math.min(Math.floor(window.innerWidth / 22), 38);
+            for (let i = 0; i < count; i++) {
+                particles.push(new FloatingHeart());
+            }
+        }
+
+        function animateBackground() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateBackground);
+        }
+
+        window.onload = function () {
+            renderPinDots();
+            initParticles();
+            animateBackground();
+        };
+    </script>
+</body>
+</html>
